@@ -16,12 +16,38 @@ db.init_app(app)
 
 api = Api(app)
 
-class Plants(Resource):
-    pass
+# Index Route
+@app.route('/plants', methods=['GET'])
+def get_plants():
+    plants = Plant.query.all()
+    plant_data = [{'id': plant.id, 'name': plant.name, 'image': plant.image, 'price': plant.price} for plant in plants]
+    return jsonify(plant_data)
 
-class PlantByID(Resource):
-    pass
-        
+# Show Route
+@app.route('/plants/<int:id>', methods=['GET'])
+def get_plant(id):
+    plant = Plant.query.get(id)
+    if plant:
+        plant_data = {'id': plant.id, 'name': plant.name, 'image': plant.image, 'price': plant.price}
+        return jsonify(plant_data)
+    else:
+        return jsonify({'message': 'Plant not found'}), 404
+
+# Create Route
+@app.route('/plants', methods=['POST'])
+def create_plant():
+    data = request.get_json()
+    name = data.get('name')
+    image = data.get('image')
+    price = data.get('price')
+
+    if name and image and price:
+        new_plant = Plant(name=name, image=image, price=price)
+        db.session.add(new_plant)
+        db.session.commit()
+        return jsonify({'id': new_plant.id, 'name': new_plant.name, 'image': new_plant.image, 'price': new_plant.price}), 201
+    else:
+        return jsonify({'message': 'Invalid data'}), 400
 
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    app.run(port=5555)
